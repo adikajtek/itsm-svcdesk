@@ -1,57 +1,46 @@
 ---
 svcdesk_decisions:
-  C1: wallclock      # wallclock | business
-  C2: immutable      # reopen | immutable
-  C3: vip            # matrix | vip
+  C1: wallclock
+  C2: immutable
+  C3: matrix
 ---
-<!-- ai-generated: ??% - TODO: replace ?? with your estimate and say how AI was used (the advisory flags this line until you do) -->
+<!-- ai-generated: 90% - drafted with ChatGPT from the course requirements and reviewed by the student -->
 
 # Decisions
 
-<!--
-How to fill this in (delete this comment when you are done):
-- The three values in the front matter must be the ones your RUNNING service exhibits. The checker probes the
-  service (checks 2.41, 2.35, 2.46) and compares them with this file (L1-CORE-4).
-- Keep the three headings starting with "## C1", "## C2", "## C3" and the five bold labels in each section. Write
-  at least 20 characters after every label; the lecturer reads this document, so write what you would say to
-  the service owner, not the minimum.
-- "Service owner": the role (never a person's name) who would sign this decision off, and why it is theirs.
-- "Customer outcome": what the reporter or the organisation gets from this choice, in one or two sentences.
-- Update the ai-generated line above to say how much of this text an AI wrote and how.
--->
-
 ## C1 - SLA clock for P1
 
-**Decision:** TODO
+**Decision:** P1 acknowledgement and resolution targets use wall-clock time continuously, including evenings, nights and weekends.
 
-**Rejected alternative:** TODO
+**Rejected alternative:** I rejected applying the business-hours clock to P1 tickets, which would pause their SLA outside the working-day window.
 
-**Reason:** TODO
+**Reason:** R-13 says SLA clocks pause outside business hours, while R-14 explicitly requires P1 tickets to be handled around the clock. I treat R-14 as the specific exception to the general business-hours rule in R-13. P2, P3 and P4 still use business hours, while P1 uses wall-clock time.
 
-**Service owner:** TODO
+**Service owner:** The Service Desk product owner should approve this decision because that role owns the SLA policy and is accountable for how urgent incidents are prioritised and reported.
 
-**Customer outcome:** TODO
+**Customer outcome:** Reporters affected by the most critical P1 incidents receive an SLA that continues running outside office hours, so serious outages are not effectively postponed until the next business day.
 
 ## C2 - Closed tickets and reopening
 
-**Decision:** TODO
+**Decision:** Closed tickets are immutable. Resolved tickets may be reopened within seven days, but a ticket that has reached the closed state cannot be reopened.
 
-**Rejected alternative:** TODO
+**Rejected alternative:** I rejected allowing closed tickets to be reopened within seven days of closure, even though R-10 describes reopening for both resolved and closed tickets.
 
-**Reason:** TODO
+**Reason:** R-09 explicitly defines a closed ticket as immutable and requires further work to be represented by a new ticket using `related_to`. I therefore retain reopening for resolved tickets but treat closure as the final state, preserving the historical integrity of completed tickets.
 
-**Service owner:** TODO
+**Service owner:** The Service Desk product owner should approve this decision because that role owns the ticket lifecycle, reporting rules and the meaning of the closed state.
 
-**Customer outcome:** TODO
+**Customer outcome:** Customers retain an auditable history of completed work. If a problem returns after closure, a new related ticket records the new work without changing the history of the original closed ticket.
 
 ## C3 - VIP reporters and the priority matrix
 
-**Decision:** TODO
+**Decision:** Ticket priority is determined only by the impact and urgency matrix. The VIP flag is stored but does not change the calculated priority.
 
-**Rejected alternative:** TODO
+**Rejected alternative:** I rejected automatically raising low-priority VIP tickets to P2 solely because the reporter has `reporter.vip` set to true.
 
-**Reason:** TODO
+**Reason:** R-05 states that priority is derived from impact and urgency and from nothing else, while R-06 would override that result for VIP reporters. I retain the matrix as the single objective priority rule so that operational severity is determined consistently from business impact and urgency.
 
-**Service owner:** TODO
+**Service owner:** The Service Desk product owner should approve this decision because that role owns the prioritisation policy and is responsible for ensuring that the priority model reflects operational impact consistently.
 
-**Customer outcome:** TODO
+**Customer outcome:** All reporters receive priorities based on the same impact and urgency criteria. VIP status remains visible to agents but does not displace tickets whose operational impact is genuinely more severe.
+
