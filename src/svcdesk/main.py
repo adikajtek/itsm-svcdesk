@@ -9,10 +9,12 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from fastapi import FastAPI, Request
+from fastapi import Body, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
+
+from svcdesk.metrics import MetricError, compute_metrics
 
 
 UTC = timezone.utc
@@ -556,3 +558,53 @@ def ticket_sla(ticket_id: str, request: Request):
         "resolve_breached": resolve_breached,
         "paused": paused,
     }
+
+
+@app.post("/dora/metrics")
+def dora_metrics(payload: dict[str, Any] = Body(...)):
+    try:
+        return compute_metrics(payload)
+    except MetricError as exc:
+        raise ApiError(
+            422,
+            "validation",
+            str(exc),
+        )
+
+
+@app.get("/dora/ticket-events")
+def dora_ticket_events():
+    events = []
+
+    lifecycle_fields = [
+        ("created_at", "created", "new"),
+        ("acknowledged_at", "acknowledged", "acknowledged"),
+        ("resolved_at", "resolved", "resolved"),
+        ("closed_at", "closed", "closed"),
+    ]
+
+    for ticket in load_tickets():
+        for field, phase, state in lifecycle_fields:
+            at = ticket.get(field)
+
+            if at is None:
+                continue
+
+            events.append(
+                {
+                    "ticket_id": ticket["id"],
+                    "at": at,
+                    "phase": phase,
+                    "priority": ticket["priority"],
+                    "state": state,
+                }
+            )
+
+    events.sort(
+        key=lambda event: (
+            parse_instant(event["at"]),
+            event["ticket_id"],
+        )
+    )
+
+    return events
