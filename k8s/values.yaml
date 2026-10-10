@@ -1,0 +1,10 @@
+# ai-generated: 100% - drafted with ChatGPT from the Lab 3 Kubernetes Stretch requirements and reviewed by the student
+
+prometheus:
+  prometheusSpec:
+    retention: 2h
+    resources:
+      limits:
+        memory: 1Gi
+    ruleSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false

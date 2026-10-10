@@ -65,5 +65,14 @@ services:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
 
+
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.12.0
+    profiles:
+      - gap
+    ports:
+      - "8474:8474"
+      - "8666:8666"
+
 volumes:
   svcdesk-data:

@@ -1,0 +1,16 @@
+# ai-generated: 100% - drafted with ChatGPT from MONITORING-SPEC.md M-31 and reviewed by the student
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: svcdesk
+  labels:
+    app: svcdesk
+spec:
+  selector:
+    matchLabels:
+      app: svcdesk
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 5s
