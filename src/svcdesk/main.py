@@ -16,6 +16,14 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from svcdesk.metrics import MetricError, compute_metrics
 
+from svcdesk.monitoring import (
+    UpstreamUnavailable,
+    close_kb_client,
+    fetch_kb_hits,
+    observe_request,
+    prometheus_response,
+)
+
 
 UTC = timezone.utc
 WARSAW = ZoneInfo("Europe/Warsaw")
@@ -28,6 +36,11 @@ C3 = "matrix"
 
 
 app = FastAPI(title="svcdesk")
+
+
+@app.middleware("http")
+async def prometheus_middleware(request: Request, call_next):
+    return await observe_request(request, call_next)
 
 
 class ApiError(Exception):
@@ -608,3 +621,37 @@ def dora_ticket_events():
     )
 
     return events
+
+
+@app.get("/kb/search")
+async def kb_search(q: str | None = None):
+    if q is None or not 1 <= len(q) <= 200:
+        raise ApiError(
+            422,
+            "validation",
+            "q must contain between 1 and 200 characters",
+        )
+
+    try:
+        hits = await fetch_kb_hits(q)
+    except UpstreamUnavailable:
+        raise ApiError(
+            502,
+            "upstream_unavailable",
+            "knowledge-base index is unavailable",
+        )
+
+    return {
+        "query": q,
+        "hits": hits,
+    }
+
+
+@app.get("/metrics")
+def prometheus_metrics():
+    return prometheus_response()
+
+
+@app.on_event("shutdown")
+async def shutdown_monitoring():
+    await close_kb_client()
