@@ -1,0 +1,41 @@
+{
+  "investigator": {
+    "agent": "course agent loop agent.py",
+    "model": "qwen3:1.7b",
+    "mcp_server": "prom_mcp.py (mcp 2.2.0)",
+    "transcript": "ai-rca/second/transcript.md"
+  },
+  "hypotheses": [
+    {
+      "id": "H1",
+      "hypothesis": "The services failing or slow are **checkout**, **ad**, **shipping**, and **shop**.",
+      "component": null,
+      "predicts": "sum(rate(traces_span_metrics_calls_total{service_name=\"shop\", span_kind=\"SPAN_KIND_SERVER\"}[5m])) > 0",
+      "at": "2026-10-12T05:06:30Z",
+      "result": false,
+      "verdict": "hallucinated",
+      "evidence": "The snapshot contains no server-span traffic for a service_name named shop. The model mixed the application concept of the shop with an actual telemetry service."
+    },
+    {
+      "id": "H2",
+      "hypothesis": "The most likely cause is **high latency in the checkout service**, as the alert \"ShopCheckoutSlow\" is pending and the metric \"traces_span_metrics_duration_milliseconds_bucket\" shows elevated durations for this service.",
+      "component": null,
+      "predicts": "(histogram_quantile(0.99, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name=\"checkout\", span_kind=\"SPAN_KIND_SERVER\"}[5m]))) / histogram_quantile(0.99, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name=\"shipping\", span_kind=\"SPAN_KIND_SERVER\"}[5m])))) > 2",
+      "at": "2026-10-12T05:06:30Z",
+      "result": false,
+      "verdict": "hallucinated",
+      "evidence": "Checkout was slow, but its p99 was about 8.8 seconds while shipping p99 was about 7.7 seconds. Checkout therefore did not dominate shipping latency by the predicted factor, so the evidence does not support checkout-local latency as the primary cause."
+    },
+    {
+      "id": "H3",
+      "hypothesis": "The query to retrieve service names was successful, confirming the involvement of **checkout** and **shipping** in the affected areas.",
+      "component": null,
+      "predicts": null,
+      "at": null,
+      "result": null,
+      "verdict": "unfalsifiable",
+      "why_no_query": "A label_values result only proves that service names exist in the snapshot. It has no incident timestamp or causal meaning, so it cannot by itself prove that checkout and shipping were involved in this particular fault.",
+      "evidence": "The agent used label_values, which listed both names but did not establish when either service was affected or whether either was causal."
+    }
+  ]
+}

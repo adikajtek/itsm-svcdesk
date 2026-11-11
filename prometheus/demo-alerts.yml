@@ -1,0 +1,41 @@
+# ai-generated: 100% - drafted with ChatGPT from INCIDENT-SPEC.md I-01 to I-03 and reviewed by the student
+
+groups:
+  - name: shop-symptoms
+    rules:
+      - alert: CheckoutErrorRate
+        expr: |
+          (
+            sum(rate(traces_span_metrics_calls_total{
+              service_name="checkout",
+              span_kind="SPAN_KIND_SERVER",
+              status_code="STATUS_CODE_ERROR"
+            }[5m]))
+            /
+            sum(rate(traces_span_metrics_calls_total{
+              service_name="checkout",
+              span_kind="SPAN_KIND_SERVER"
+            }[5m]))
+          ) > 0.05
+        labels:
+          service: checkout
+          severity: P1
+        annotations:
+          summary: "More than 5% of checkout server spans are errors"
+
+      - alert: ShopCheckoutSlow
+        expr: |
+          histogram_quantile(
+            0.99,
+            sum by (le) (
+              rate(traces_span_metrics_duration_milliseconds_bucket{
+                service_name="checkout",
+                span_kind="SPAN_KIND_SERVER"
+              }[5m])
+            )
+          ) > 2000
+        labels:
+          service: checkout
+          severity: P1
+        annotations:
+          summary: "Checkout p99 server-span latency exceeds 2 seconds"

@@ -1,0 +1,40 @@
+{
+  "investigator": {
+    "agent": "course agent loop agent.py",
+    "model": "qwen3:4b-instruct",
+    "mcp_server": "prom_mcp.py (mcp 2.2.0)",
+    "transcript": "ai-rca/transcript.md"
+  },
+  "hypotheses": [
+    {
+      "id": "H1",
+      "hypothesis": "The span \"oteldemo.ProductCatalogService/GetProduct\" shows increasing duration from 85 to 344 milliseconds, and its call count grows from 85 to 344, indicating that the product catalog service is becoming increasingly slow, which may be a bottleneck in the checkout flow.",
+      "component": null,
+      "predicts": "histogram_quantile(0.99, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name=\"product-catalog\", span_kind=\"SPAN_KIND_SERVER\"}[5m]))) > 500",
+      "at": "2026-10-12T05:06:30Z",
+      "result": false,
+      "verdict": "hallucinated",
+      "evidence": "At 05:06:30Z product-catalog did not appear among services whose server-span p99 exceeded 500 ms, so the claimed product-catalog latency bottleneck was not supported."
+    },
+    {
+      "id": "H2",
+      "hypothesis": "The span \"oteldemo.CheckoutService/PlaceOrder\" has call counts rising from 51 to 182 and duration increasing from 80 to 182 milliseconds, which shows a steady rise in latency, indicating it may be the primary service responsible for high checkout latency.",
+      "component": null,
+      "predicts": "histogram_quantile(0.99, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name=\"checkout\", span_kind=\"SPAN_KIND_SERVER\"}[5m]))) <= 250",
+      "at": "2026-10-12T05:06:30Z",
+      "result": false,
+      "verdict": "hallucinated",
+      "evidence": "At 05:06:30Z checkout server-span p99 was approximately 8800 ms, far above the claimed 80-182 ms latency range."
+    },
+    {
+      "id": "H3",
+      "hypothesis": "Hypothesis based on duration metrics: The span \"oteldemo.PaymentService/Charge\" is not visible in the metrics, but its absence in the response suggests it might have failed, though no status_code=STATUS_CODE_ERROR was present; thus, this is not confirmed.",
+      "component": null,
+      "predicts": "sum(rate(traces_span_metrics_calls_total{service_name=\"payment\", span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\"}[5m])) > 0.01",
+      "at": "2026-10-12T05:06:30Z",
+      "result": false,
+      "verdict": "hallucinated",
+      "evidence": "The payment server-span error-rate prediction returned nothing at 05:06:30Z, so the snapshot did not support the suggested payment failure."
+    }
+  ]
+}
